@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">📬 我的提交记录</h2>
+
+  {% if messages %}
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>题目位置</th>
+          <th>状态</th>
+          <th>管理员评论</th>
+          <th>审核人</th>
+          <th>审核时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub, prob, review, admin in messages %}
+        <tr>
+          <td><code>{{ prob.row_index }},{{ prob.col_index }}</code></td>
+          <td>
+            {% if sub.status == 'archived' %}
+              <span class="badge bg-success">✅ 已通过</span>
+            {% elif sub.status == 'rejected' %}
+              <span class="badge bg-danger">❌ 被驳回</span>
+            {% else %}
+              <span class="badge bg-secondary">未知状态</span>
+            {% endif %}
+          </td>
+          <td>{{ review.comment if review else '-' }}</td>
+          <td>
+            {% if admin %}
+              <span class="badge bg-primary">{{ admin.username }}</span>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </td>
+          <td class="text-muted">
+            {{ review.reviewed_at.strftime("%Y-%m-%d %H:%M") if review else '-' }}
+          </td>
+          <td>
+            <a href="{{ url_for('player_bp.view_problem', pid=prob.id) }}" class="btn btn-sm btn-outline-primary">
+              查看题目
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="text-muted">你还没有提交过任何题目。</p>
+  {% endif %}
+</div>
+{% endblock %}

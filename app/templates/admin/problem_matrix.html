@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+  <h2 class="mb-4">📦 题库矩阵设置</h2>
+
+  <!-- 设置矩阵大小表单 -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="post" class="row gx-3 gy-2 align-items-center">
+        <div class="col-md-auto">
+          <label for="matrix_size" class="form-label">矩阵大小</label>
+          <select name="matrix_size" id="matrix_size" class="form-select">
+            {% for size in [5, 6, 7] %}
+              <option value="{{ size }}" {% if size == config.matrix_size %}selected{% endif %}>{{ size }} x {{ size }}</option>
+            {% endfor %}
+          </select>
+          <br>
+          <div class="col-md-auto mt-3 mt-md-0">
+            <button type="submit" class="btn btn-danger">
+              修改大小（将清空所有题目）
+            </button>
+          </div>
+        </div>
+
+
+      </form>
+    </div>
+  </div>
+
+  <!-- 矩阵展示 -->
+  <h4 class="mb-3">🧩 当前题目矩阵</h4>
+  <div class="matrix-grid" style="--matrix-size: {{ config.matrix_size }}; display: grid; grid-template-columns: repeat({{ config.matrix_size }}, 1fr); gap: 10px;">
+    {% for i in range(config.matrix_size) %}
+      {% for j in range(config.matrix_size) %}
+        {% set has_problem = (i, j) in problem_dict %}
+        <a href="{{ url_for('admin_bp.edit_problem', row=i, col=j) }}"
+           class="square-cell text-decoration-none {{ 'text-dark' if has_problem else 'text-white' }}"
+           style="background-color: {{ '#d4edda' if has_problem else '#f5c6cb' }};">
+          {{ i }},{{ j }}<br>
+          {% if has_problem %}✅{% else %}❌{% endif %}
+        </a>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4" style="max-width: 1000px;">
+
+  <!-- 搜索栏 -->
+  <div class="mb-3">
+    <input type="text" id="searchInput" class="form-control table-search-bar" placeholder="🔍 搜索用户名或题目位置..." onkeyup="filterTable()">
+  </div>
+
+  <!-- 🗂️ 待审核提交 -->
+  <div class="card mb-5 shadow-sm">
+    <div class="card-header bg-warning text-dark fw-bold">🗂️ 待审核提交</div>
+    <div class="card-body p-0">
+      {% if pending %}
+      <div class="table-responsive">
+        <table id="reviewTable" class="table table-hover align-middle m-0">
+            <thead class="table-light">
+                <tr>
+                  <th>玩家</th>
+                  <th>团队</th>
+                  <th>题目位置</th>
+                  <th>提交时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for sub, prob, user, team_id in pending %}
+                <tr>
+                  <td>{{ user.username }}</td>
+                  <td>{{ team_map[team_id].name if team_id in team_map else "未分配" }}</td>
+                  <td>{{ prob.row_index }},{{ prob.col_index }}</td>
+                  <td>{{ sub.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                  <td>
+                    <a href="{{ url_for('admin_bp.review_submission', submission_id=sub.id) }}"
+                       class="btn btn-sm btn-outline-primary">📝 审核</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+              
+        </table>
+      </div>
+      {% else %}
+        <div class="p-3 text-muted">暂无待审核提交。</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 📜 已审核记录 -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-success text-white fw-bold">📜 已审核记录</div>
+    <div class="card-body p-0">
+      {% if reviewed %}
+      <div class="table-responsive">
+        <table id="reviewedTable" class="table table-bordered align-middle m-0">
+          <thead class="table-light">
+            <tr>
+              <th>玩家</th>
+              <th>团队</th>
+              <th>题目</th>
+              <th>审核结果</th>
+              <th>评论</th>
+              <th>间谍干扰</th>
+              <th>审核人</th>
+              <th>审核时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub, prob, user, review, admin, is_final, team_id in reviewed %}
+            <tr>
+              <td>{{ user.username }}</td>
+              <td>{{ team_map[team_id].name if team_id in team_map else "未分配" }}</td>
+              <td>{{ prob.row_index }},{{ prob.col_index }}</td>
+              <td>
+                {% if review.result in ["approved", "approve"] %}
+                  <span class="badge bg-success">✅ 通过</span>
+                {% elif review.result in ["rejected", "reject"] %}
+                  <span class="badge bg-danger">❌ 拒绝</span>
+                {% else %}
+                  <span class="badge bg-secondary">❓ 未知</span>
+                {% endif %}
+                {% if is_final %}
+                  <span class="badge bg-primary">最终</span>
+                {% endif %}
+              </td>
+              <td>{{ review.comment or '-' }}</td>
+              <td>{% if review.is_spy_attack %}🕵️ 是{% else %}-{% endif %}</td>
+              <td>{{ admin.username if admin else '-' }}</td>
+              <td>{{ review.reviewed_at.strftime("%Y-%m-%d %H:%M") if review and review.reviewed_at else '-' }}</td>
+              <td>
+                <a href="{{ url_for('admin_bp.view_submission_history', user_id=user.id, problem_id=prob.id) }}"
+                   class="btn btn-sm btn-outline-secondary">🔍 查看详情</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="p-3 text-muted">暂无审核记录。</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ✅ 搜索功能 JS -->
+<script>
+function filterTable() {
+  const input = document.getElementById("searchInput");
+  const filter = input.value.toLowerCase();
+  const tables = ["reviewTable", "reviewedTable"];
+
+  tables.forEach(tableId => {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+      const text = rows[i].innerText.toLowerCase();
+      rows[i].style.display = text.includes(filter) ? "" : "none";
+    }
+  });
+}
+</script>
+{% endblock %}

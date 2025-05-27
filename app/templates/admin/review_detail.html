@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container" style="max-width: 800px;">
+  <h2 class="mb-4">📝 审核提交</h2>
+
+  <!-- 玩家基本信息 -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <p><strong>玩家：</strong> {{ user.username }}</p>
+      <p><strong>题目位置：</strong> <code>({{ problem.row_index }}, {{ problem.col_index }})</code></p>
+    </div>
+  </div>
+
+  <!-- 题目信息 -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light fw-bold">📌 题目信息</div>
+    <div class="card-body">
+      <p><strong>题目（正常玩家）：</strong></p>
+      <div class="border rounded p-3 bg-white" style="white-space: pre-wrap;">{{ problem.normal_question | safe }}</div>
+
+      {% if config.spy_enabled %}
+        <p class="mt-3"><strong>题目（间谍玩家）：</strong></p>
+        {% if problem.spy_question %}
+          <div class="border rounded p-3 bg-white" style="white-space: pre-wrap;">{{ problem.spy_question | safe }}</div>
+        {% else %}
+          <div class="text-muted"><em>未设置</em></div>
+        {% endif %}
+
+        <p class="mt-3"><strong>玩家身份：</strong>
+          {% if is_spy %}
+            <span class="badge bg-danger">🕵️ 间谍</span>
+          {% else %}
+            <span class="badge bg-primary">🧑 普通玩家</span>
+          {% endif %}
+        </p>
+
+        <p><strong>👉 实际看到的题目：</strong></p>
+        <div class="border rounded p-3 bg-white" style="white-space: pre-wrap;">{{ visible_question | safe }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 提交内容 -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light fw-bold">📤 提交内容</div>
+    <div class="card-body">
+      {% if submission.image_path %}
+        <p><strong>文件：</strong></p>
+        {% if submission.image_path.endswith('.mp4') or submission.image_path.endswith('.webm') %}
+          <video class="w-100 mb-3 rounded border" controls>
+            <source src="/{{ submission.image_path }}">
+          </video>
+        {% else %}
+          <img src="/{{ submission.image_path }}" class="img-fluid rounded border" style="max-width: 100%;">
+        {% endif %}
+      {% endif %}
+
+      {% if submission.description %}
+        <p class="mt-3"><strong>描述：</strong></p>
+        <div class="border rounded p-3 bg-light" style="white-space: pre-wrap;">{{ submission.description | safe }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 审核表单 -->
+  <form method="post" class="card p-4 shadow-sm">
+    <div class="mb-3">
+      <label class="form-label"><strong>💬 审核评论（可选）</strong></label>
+      <textarea name="comment" class="form-control" rows="3" placeholder="可填写审核理由或建议..."></textarea>
+    </div>
+
+    {% if config.spy_enabled %}
+      <div class="form-check mb-4">
+        <input type="checkbox" name="spy_attack" class="form-check-input" id="spyAttack">
+        <label class="form-check-label" for="spyAttack">🕵️ 该提交为间谍干扰成功</label>
+      </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between flex-wrap gap-2">
+      <button type="submit" name="action" value="approve" class="btn btn-success w-100 w-md-auto">✅ 通过</button>
+      <button type="submit" name="action" value="reject" class="btn btn-danger w-100 w-md-auto">❌ 拒绝</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

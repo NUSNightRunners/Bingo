@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>🛠️ 管理员后台</h2>
+<p>你好，管理员 <strong>{{ user.username }}</strong></p>
+
+<hr>
+
+<h3>系统设置</h3>
+<form method="post" action="{{ url_for('admin_bp.toggle_spy') }}">
+    <p>
+        <label>
+            <input type="checkbox" name="spy_enabled" {% if bingo_config.spy_enabled %}checked{% endif %}>
+            启用间谍功能
+        </label>
+    </p>
+    <button type="submit">💾 保存设置</button>
+</form>
+
+
+<h4>📈 系统状态预览（简要）</h4>
+<ul>
+    <li>当前题库矩阵大小：{{ bingo_config.matrix_size }}x{{ bingo_config.matrix_size }}</li>
+    <li>间谍机制：{{ '已开启 🕵️' if bingo_config.spy_enabled else '未开启 ❌' }}</li>
+    <li>题目已设置数量：{{ problem_count }} / {{ bingo_config.matrix_size * bingo_config.matrix_size }}</li>
+</ul>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4" style="max-width: 600px;">
+  <h2 class="mb-4">➕ 创建新用户</h2>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+        <!-- 用户名 -->
+        <div class="mb-3">
+          <label for="username" class="form-label">用户名</label>
+          <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+
+        <!-- 密码 -->
+        <div class="mb-3">
+          <label for="password" class="form-label">密码</label>
+          <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+
+        <!-- 管理员复选框 -->
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" name="is_admin" id="admin_checkbox">
+          <label class="form-check-label" for="admin_checkbox">
+            设为管理员
+          </label>
+        </div>
+
+        <!-- 间谍复选框 -->
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="is_spy" id="spy_checkbox">
+          <label class="form-check-label" for="spy_checkbox">
+            设为间谍
+          </label>
+        </div>
+
+        <!-- 团队选择 -->
+        <div class="mb-4">
+          <label for="team_id" class="form-label">所属团队</label>
+          <select class="form-select" name="team_id" id="team_id">
+            <option value="">未分配</option>
+            {% for team in teams %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- 提交按钮 -->
+        <div class="d-grid">
+          <button type="submit" class="btn btn-success">✅ 创建用户</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

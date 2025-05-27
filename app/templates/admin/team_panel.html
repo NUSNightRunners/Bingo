@@ -1,0 +1,113 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4" style="max-width: 1100px;">
+
+  <!-- 排序控制 -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">👥 团队面板</h2>
+    <div class="btn-group">
+      <button class="btn btn-outline-secondary btn-sm" onclick="sortTeams('total')">📄 提交数</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="sortTeams('accuracy')">📊 正确率</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="sortTeams('bingo')">🎯 Bingo 数</button>
+    </div>
+  </div>
+
+  <!-- 团队卡片 -->
+  <div id="teamCards" class="row row-cols-1 row-cols-md-2 g-4">
+    {% for team in teams %}
+    <div class="col team-card" data-total="{{ team_stats[team.id].total }}"
+         data-accuracy="{% if team_stats[team.id].total > 0 %}{{ (team_stats[team.id].passed / team_stats[team.id].total * 100) | round(2) }}{% else %}0{% endif %}"
+         data-bingo="{{ team_stats[team.id].bingo }}">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <strong>{{ team.name }}</strong>
+        </div>
+        <div class="card-body">
+          <p><strong>成员：</strong>
+            {% for user, is_spy in team_members[team.id] %}
+              <span class="badge bg-secondary me-1">{{ user.username }}{% if is_spy %} 🕵️{% endif %}</span>
+            {% else %}
+              <em class="text-muted">暂无成员</em>
+            {% endfor %}
+          </p>
+          <p class="mb-0 small text-muted">
+            📄 提交：<strong>{{ team_stats[team.id].total }}</strong> |
+            ✅ 通过：<strong>{{ team_stats[team.id].passed }}</strong> |
+            ❌ 拒绝：<strong>{{ team_stats[team.id].rejected }}</strong> |
+            🎯 Bingo：<strong>{{ team_stats[team.id].bingo }}</strong> |
+            📊 正确率：
+            {% if team_stats[team.id].total > 0 %}
+              <strong>{{ (team_stats[team.id].passed / team_stats[team.id].total * 100) | round(2) }}%</strong>
+            {% else %}
+              <span class="text-muted">－</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- 间谍面板 -->
+  <hr class="my-5">
+  <h2 class="mb-4">🕵️ 间谍面板</h2>
+
+  {% if spies %}
+  <form method="post" action="{{ url_for('admin_bp.update_spy_scores') }}">
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>用户名</th>
+            <th>所属团队</th>
+            <th>间谍得分</th>
+            <th>调整分数</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user, team_id in spies %}
+          <tr>
+            <td>{{ user.username }}</td>
+            <td>
+              {% set team = teams | selectattr("id", "equalto", team_id) | list | first %}
+              {{ team.name if team else "未知团队" }}
+            </td>
+            <td>
+              {{ spy_scores.get(user.id, 0) }}
+              {% if spy_scores.get(user.id, 0) >= 3 %}
+                <span class="ms-1 text-danger">🧨</span>
+              {% elif spy_scores.get(user.id, 0) <= -2 %}
+                <span class="ms-1 text-muted">😓</span>
+              {% endif %}
+            </td>
+            <td>
+              <input type="number" name="adjustments_{{ user.id }}" value="0" class="form-control form-control-sm" style="max-width: 80px;">
+              <input type="hidden" name="user_ids" value="{{ user.id }}">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <button type="submit" class="btn btn-success">💾 提交修改</button>
+  </form>
+  {% else %}
+    <p><em class="text-muted">当前没有被设置为间谍的用户。</em></p>
+  {% endif %}
+</div>
+
+<!-- 排序脚本 -->
+<script>
+function sortTeams(by) {
+  const cards = Array.from(document.querySelectorAll(".team-card"));
+  cards.sort((a, b) => {
+    const va = parseFloat(a.dataset[by] || 0);
+    const vb = parseFloat(b.dataset[by] || 0);
+    return vb - va;
+  });
+
+  const container = document.getElementById("teamCards");
+  cards.forEach(card => container.appendChild(card));
+}
+</script>
+{% endblock %}

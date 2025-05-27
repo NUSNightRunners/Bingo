@@ -1,0 +1,176 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">👥 用户管理</h2>
+
+  <!-- 🔍 搜索栏 -->
+  <form method="get" class="row g-2 mb-4">
+    <div class="col-sm-4">
+      <input type="text" class="form-control" name="q" placeholder="搜索用户名..." value="{{ search_query }}">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">🔍 搜索</button>
+    </div>
+  </form>
+
+  <!-- 导入用户 + 设置团队数 -->
+  <div class="row mb-4">
+    <div class="col-md-6 mb-3">
+      <div class="card">
+        <div class="card-header bg-light">📥 导入用户 CSV</div>
+        <div class="card-body">
+          <form action="{{ url_for('admin_bp.import_users') }}" method="post" enctype="multipart/form-data">
+            <div class="input-group">
+              <input type="file" class="form-control" name="file" required>
+              <button type="submit" class="btn btn-success">上传</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <div class="card">
+        <div class="card-header bg-light">🔧 设置团队总数</div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('admin_bp.set_team_count') }}">
+            <select name="team_count" class="form-select" onchange="this.form.submit()">
+              {% for i in range(1, 11) %}
+                <option value="{{ i }}" {% if i == team_count %}selected{% endif %}>{{ i }} 个团队</option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 创建新用户按钮 -->
+  <div class="mb-4">
+    <a href="{{ url_for('admin_bp.create_user') }}" class="btn btn-primary">➕ 新建用户</a>
+  </div>
+
+  <!-- 用户表格 -->
+  <div class="table-responsive mb-4">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>用户名</th>
+          <th>管理员</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.id }}</td>
+          <td>
+            {{ user.username }}
+            {% if user.is_admin %}<span class="badge bg-primary ms-1">🛡️ 管理员</span>{% endif %}
+            {% if user.id in spy_ids %}<span class="badge bg-danger ms-1">🕵️ 间谍</span>{% endif %}
+          </td>
+          <td>
+            {% if user.is_admin %}
+              <span class="badge bg-success">✅</span>
+            {% else %}
+              <span class="badge bg-secondary">❌</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if not user.is_admin %}
+              <a href="{{ url_for('admin_bp.set_admin', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">设为管理员</a>
+            {% else %}
+              <a href="{{ url_for('admin_bp.unset_admin', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary">撤销管理员</a>
+            {% endif %}
+            <a href="{{ url_for('admin_bp.reset_password', user_id=user.id) }}" class="btn btn-sm btn-outline-warning ms-1">重设密码</a>
+            <a href="{{ url_for('admin_bp.delete_user', user_id=user.id) }}" class="btn btn-sm btn-outline-danger ms-1"
+               onclick="return confirm('确定删除该用户？');">🗑 删除</a>
+            <a href="{{ url_for('admin_bp.set_spy', user_id=user.id) }}" class="btn btn-sm btn-outline-dark ms-1">
+              {% if user.id in spy_ids %}❌ 取消间谍{% else %}🕵️ 设为间谍{% endif %}
+            </a>
+
+            {% if not user.is_admin %}
+              <form method="post" action="{{ url_for('admin_bp.assign_team') }}" style="display:inline;">
+                <input type="hidden" name="user_id" value="{{ user.id }}">
+                <select name="team_id" class="form-select form-select-sm d-inline w-auto ms-1" onchange="this.form.submit()">
+                  {% for team in teams %}
+                    <option value="{{ team.id }}"
+                      {% if user.id in user_team_map and user_team_map[user.id] == team.id %}selected{% endif %}>
+                      {{ team.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </form>
+            {% else %}
+              <span class="text-muted ms-2">（管理员固定团队）</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 分页控件 -->
+  {% if pagination.pages > 1 %}
+  <nav>
+    <ul class="pagination">
+      <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('admin_bp.user_list', page=pagination.prev_num, q=search_query) }}">« 上一页</a>
+      </li>
+      {% for p in range(1, pagination.pages + 1) %}
+        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_bp.user_list', page=p, q=search_query) }}">{{ p }}</a>
+        </li>
+      {% endfor %}
+      <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('admin_bp.user_list', page=pagination.next_num, q=search_query) }}">下一页 »</a>
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+
+  <!-- 团队成员概览 -->
+  <div class="card mt-5 mb-4">
+    <div class="card-header bg-info text-white">📋 团队成员概览</div>
+    <div class="card-body">
+      {% for team in teams %}
+        <p><strong>{{ team.name }}</strong>：
+          {% for user in team_members[team.id] %}
+            {{ user.username }}{% if user.id in spy_ids %} 🕵️{% endif %}{% if not loop.last %}, {% endif %}
+          {% else %}
+            <em>暂无成员</em>
+          {% endfor %}
+        </p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 管理员团队 -->
+  <div class="card mb-4">
+    <div class="card-header bg-secondary text-white">🛡️ 管理员团队</div>
+    <div class="card-body">
+      <p>
+        {% for user in users if user.is_admin %}
+          {{ user.username }}{% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </p>
+    </div>
+  </div>
+
+  <!-- 间谍团队 -->
+  <div class="card mb-4">
+    <div class="card-header bg-danger text-white">🕵️ 间谍团队</div>
+    <div class="card-body">
+      <p>
+        {% for user in users if user.id in spy_ids %}
+          {{ user.username }}{% if not loop.last %}, {% endif %}
+        {% else %}
+          <em>暂无间谍</em>
+        {% endfor %}
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

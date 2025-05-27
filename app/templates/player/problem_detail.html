@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+
+  <h2 class="mb-4">📌 题目详情：<code>({{ problem.row_index }}, {{ problem.col_index }})</code></h2>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light"><strong>📖 题目内容</strong></div>
+    <div class="card-body bg-white">
+      <div class="border rounded p-3" style="white-space: pre-wrap;">{{ question | safe }}</div>
+    </div>
+  </div>
+
+  {% if submission %}
+  <div class="card mb-4 border-{{ 'success' if submission.status == 'archived' else 'danger' if submission.status == 'rejected' else 'warning' }}">
+    <div class="card-header bg-light">
+      <strong>📥 当前提交状态</strong>
+    </div>
+    <div class="card-body">
+      <ul class="list-unstyled mb-3">
+        <li>🧑 提交人：<strong>{{ user_map[submission.user_id].username if submission.user_id in user_map else "未知用户" }}</strong></li>
+        <li>⏰ 提交时间：{{ submission.submitted_at.strftime("%Y-%m-%d %H:%M") if submission.submitted_at else "未知时间" }}</li>
+        <li>🧾 状态：
+          {% if submission.status == "archived" %}
+            <span class="badge bg-success">✅ 已归档</span>
+          {% elif submission.status == "rejected" %}
+            <span class="badge bg-danger">❌ 被拒绝</span>
+          {% else %}
+            <span class="badge bg-warning text-dark">⌛ 待审核</span>
+          {% endif %}
+        </li>
+      </ul>
+
+      {% if submission.description %}
+        <div class="mb-3"><strong>📄 描述：</strong><br>{{ submission.description | e }}</div>
+      {% endif %}
+
+      {% if submission.image_path %}
+        <div class="mb-3"><strong>📎 附件：</strong><br>
+          {% if submission.image_path.endswith('.mp4') or submission.image_path.endswith('.webm') %}
+            <video width="300" class="rounded border" controls>
+              <source src="/{{ submission.image_path }}">
+            </video>
+          {% else %}
+            <img src="/{{ submission.image_path }}" class="img-fluid rounded border" style="max-width: 300px;">
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if submission.status == "rejected" %}
+        <div class="alert alert-danger mt-3">⚠️ 上次提交被拒绝，请修改后重试。</div>
+      {% elif submission.status == "archived" %}
+        <div class="alert alert-success mt-3">✅ 本题已归档，团队提交已完成。</div>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+    <div class="alert alert-secondary">📭 当前题目尚未有提交记录。</div>
+  {% endif %}
+
+  {% if not is_team_archived %}
+  <div class="card mb-5 shadow-sm">
+    <div class="card-header bg-light"><strong>📤 提交你的答案</strong></div>
+    <div class="card-body">
+      <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        <div class="mb-3">
+          <label class="form-label">描述（可选）</label>
+          <textarea name="description" class="form-control" rows="3">{{ submission.description if submission else "" }}</textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">图片/视频附件（可选）</label>
+          <input type="file" name="image" class="form-control">
+          <small class="form-text text-muted">* 请至少填写描述或上传一个附件</small>
+        </div>
+
+        <div class="progress mt-3" style="height: 20px; display: none;" id="progressContainer">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" id="progressBar">0%</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">📨 提交</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+    <div class="alert alert-info">📌 本题已归档，团队成员不可再次提交。</div>
+  {% endif %}
+
+  {% if all_team_submissions|length > 1 %}
+  <hr>
+  <h4 class="mt-5 mb-3">📚 提交历史记录</h4>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>提交人</th>
+          <th>时间</th>
+          <th>状态</th>
+          <th>描述</th>
+          <th>附件</th>
+          <th>管理员评论</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in all_team_submissions %}
+          {% set review = review_map.get(s.id) %}
+          {% set is_superseded = review and "被新提交覆盖" in (review.comment or "") %}
+          <tr class="{% if is_superseded %}text-muted{% endif %}">
+            <td>{{ user_map[s.user_id].username if s.user_id in user_map else "未知用户" }}</td>
+            <td>{{ s.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td>
+              {% if s.status == "archived" %}✅ 已归档
+              {% elif s.status == "rejected" %}
+                {% if is_superseded %}📝 被新提交覆盖{% else %}❌ 被拒绝{% endif %}
+              {% elif s.status == "pending" %}⌛ 待审核{% endif %}
+            </td>
+            <td>{{ s.description or '-' }}</td>
+            <td>
+              {% if s.image_path %}
+                {% if s.image_path.endswith('.mp4') or s.image_path.endswith('.webm') %}
+                  <video width="100" controls><source src="/{{ s.image_path }}"></video>
+                {% else %}
+                  <img src="/{{ s.image_path }}" width="100" class="img-thumbnail">
+                {% endif %}
+              {% else %}-{% endif %}
+            </td>
+            <td>{{ review.comment if review and review.comment else '-' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+  const xhr = new XMLHttpRequest();
+
+  const progressBar = document.getElementById('progressBar');
+  const progressContainer = document.getElementById('progressContainer');
+  progressContainer.style.display = 'block';
+
+  xhr.upload.addEventListener('progress', function(e) {
+    if (e.lengthComputable) {
+      const percent = Math.round((e.loaded / e.total) * 100);
+      progressBar.style.width = percent + '%';
+      progressBar.innerText = percent + '%';
+    }
+  });
+
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      location.reload();
+    } else {
+      alert('上传失败，请重试');
+    }
+  };
+
+  xhr.open('POST', window.location.href);
+  xhr.send(formData);
+});
+</script>
+{% endblock %}

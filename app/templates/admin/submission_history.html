@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4">
+
+  <h2 class="mb-4">📜 提交记录详情</h2>
+
+  <!-- 🧩 基本题目信息 -->
+  <div class="mb-4">
+    <p><strong>玩家：</strong> {{ user.username }}</p>
+    <p><strong>题目位置：</strong> <code>({{ problem.row_index }}, {{ problem.col_index }})</code></p>
+    <p><strong>题目内容：</strong></p>
+    <div class="border rounded p-3 bg-light" style="white-space: pre-wrap;">
+      {{ problem.normal_question | safe }}
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- 🔁 多次提交历史 -->
+  {% for sub in submissions %}
+    {% set value = review_map.get(sub.id) %}
+    {% set review = value[0] if value else None %}
+    {% set admin = value[1] if value else None %}
+    {% set is_superseded = review and "被新提交覆盖" in (review.comment or "") %}
+
+    <div class="card mb-4 {% if is_superseded %}bg-light text-muted{% endif %}">
+      <div class="card-header">
+        <strong>📥 第 {{ loop.index }} 次提交</strong> – {{ sub.submitted_at.strftime("%Y-%m-%d %H:%M") }}
+      </div>
+
+      <div class="card-body">
+        <div class="row">
+          <!-- 左侧内容 -->
+          <div class="col-md-8">
+
+            <!-- 🎥 附件 -->
+            <p class="fw-bold">📎 附件</p>
+            {% if sub.image_path %}
+              {% if sub.image_path.endswith('.mp4') or sub.image_path.endswith('.webm') %}
+                <video width="100%" class="rounded border mb-3" controls>
+                  <source src="/{{ sub.image_path }}">
+                </video>
+              {% else %}
+                <img src="/{{ sub.image_path }}" class="rounded border img-fluid mb-3" style="max-width: 300px;">
+              {% endif %}
+            {% else %}
+              <p><em>未上传附件</em></p>
+            {% endif %}
+
+            <!-- 📄 描述 -->
+            <p class="fw-bold">📄 描述</p>
+            <div class="border p-2 bg-white rounded mb-3" style="white-space: pre-wrap;">
+              {{ sub.description | safe if sub.description else "（无描述）" }}
+            </div>
+
+            <!-- 💬 审核评论 -->
+            <p class="fw-bold">💬 审核评论</p>
+            <div class="border p-2 bg-white rounded" style="white-space: pre-wrap;">
+              {{ review.comment | safe if review and review.comment else "－" }}
+            </div>
+
+          </div>
+
+          <!-- 右侧状态信息 -->
+          <div class="col-md-4">
+            <p class="fw-bold">🧾 审核状态</p>
+            {% if review and review.result in ['approve', 'approved'] %}
+              <span class="badge bg-success fs-6">✅ 已通过</span>
+            {% elif review and review.result in ['reject', 'rejected'] %}
+              <span class="badge bg-danger fs-6">❌ 被拒绝</span>
+            {% else %}
+              <span class="badge bg-secondary fs-6">⌛ 待审核</span>
+            {% endif %}
+
+            {% if is_superseded %}
+              <div class="text-muted mt-2">📄 此提交已被后续提交覆盖</div>
+            {% endif %}
+
+            <hr>
+            <p><strong>👤 审核人：</strong><br>{{ admin.username if admin else "－" }}</p>
+            <p><strong>🕵️ 间谍干扰：</strong><br>{% if review and review.is_spy_attack %}是{% else %}－{% endif %}</p>
+            <p><strong>⏰ 审核时间：</strong><br>{{ review.reviewed_at.strftime("%Y-%m-%d %H:%M") if review else "－" }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+
+</div>
+{% endblock %}

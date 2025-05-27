@@ -1,0 +1,126 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">🎮 欢迎回来，<strong>{{ current_user.username }}</strong></h2>
+
+  <!-- 当前题目矩阵 -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      🎯 当前题目矩阵
+    </div>
+    <div class="card-body">
+
+      <div class="matrix-grid" style="--matrix-size: {{ config.matrix_size }}">
+        {% for i in range(config.matrix_size) %}
+          {% for j in range(config.matrix_size) %}
+            {% set p = problem_dict.get((i, j)) %}
+            {% if p %}
+              {% set color = "#eeeeee" %}
+              {% set status_icon = "⬜" %}
+              {% if p.id in completed_ids %}
+                {% set color = "#d4edda" %}
+                {% set status_icon = "✅" %}
+              {% elif sub_map.get(p.id) == 'pending' %}
+                {% set color = "#fff3cd" %}
+                {% set status_icon = "⌛" %}
+              {% elif sub_map.get(p.id) == 'rejected' %}
+                {% set color = "#f8d7da" %}
+                {% set status_icon = "❌" %}
+              {% endif %}
+              <a href="{{ url_for('player_bp.view_problem', pid=p.id) }}"
+                 class="square-cell text-dark text-decoration-none fw-bold"
+                 style="background-color: {{ color }};"
+                 title="点击进入题目 ({{ i }}, {{ j }})">
+                {{ status_icon }}
+              </a>
+            {% else %}
+              <div class="square-cell bg-secondary text-white" title="尚未发布">×</div>
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header bg-secondary text-white">徒步地图与紧急联系人</div>
+    <center><img src="{{ url_for('static', filename='map.png') }}" width="80%"></center> 
+    <div class="card-body">
+    <p><strong>紧急联系人：</strong>Fang Sihan 84245903</p>
+  </div>
+  </div>
+
+  <!-- 团队成员 -->
+  <div class="card mb-4">
+    <div class="card-header bg-info text-white">👥 团队成员</div>
+    <div class="card-body">
+      {% if teammates %}
+        {% for mate in teammates %}
+          <span class="badge bg-primary me-1">{{ mate.username }}</span>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted">暂无其他成员</p>
+      {% endif %}
+    </div>
+  </div>
+
+ <!-- 团队统计 -->
+<div class="row mb-4">
+    <!-- 📄 提交总数 -->
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-primary h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">📄 提交总数</h5>
+          <p class="display-6">{{ team_stats.total }}</p>
+        </div>
+      </div>
+    </div>
+  
+    <!-- ✅ 已完成 -->
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-success h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">✅ 已完成题目</h5>
+          <p class="display-6">{{ team_stats.passed }}</p>
+        </div>
+      </div>
+    </div>
+  
+    <!-- ❌ 被拒 -->
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-danger h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">❌ 被拒题目</h5>
+          <p class="display-6">{{ team_stats.rejected }}</p>
+        </div>
+      </div>
+    </div>
+  
+    <!-- 🎉 BINGO 数 -->
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-warning h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">🎉 BINGO 数</h5>
+          <p class="display-6">{{ team_stats.bingo }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <!-- 所有团队 BINGO 排行 -->
+  <div class="card mb-4">
+    <div class="card-header bg-secondary text-white">🏆 所有团队 BINGO 排行</div>
+    <ol class="list-group list-group-numbered">
+      {% for team_name, bingo in all_bingo_counts %}
+        <li class="list-group-item d-flex justify-content-between align-items-center 
+            {% if loop.index == 1 %}bg-warning-subtle{% elif loop.index == 2 %}bg-light{% endif %}">
+          <strong>{{ team_name }}</strong>
+          <span class="badge bg-success rounded-pill">{{ bingo }} 个</span>
+        </li>
+      {% endfor %}
+    </ol>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+  <h2 class="mb-4">✏️ 编辑题目 ({{ row }}, {{ col }})</h2>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" id="edit-form">
+        <!-- 正常玩家题目 -->
+        <div class="mb-4">
+          <label class="form-label">题目内容（正常玩家）</label>
+          <div id="normal_editor" style="height: 200px;">{{ problem.normal_question|safe }}</div>
+          <input type="hidden" name="normal_question" id="normal_input">
+        </div>
+
+        {% if config.spy_enabled %}
+        <!-- 间谍玩家题目 -->
+        <div class="mb-4">
+          <label class="form-label">题目内容（间谍玩家）</label>
+          <div id="spy_editor" style="height: 200px;">{{ problem.spy_question|safe }}</div>
+          <input type="hidden" name="spy_question" id="spy_input">
+        </div>
+        {% endif %}
+
+        <!-- 操作按钮 -->
+        <div class="d-flex justify-content-between">
+          <button type="button" class="btn btn-secondary" onclick="previewQuestions()">👁️ 预览</button>
+          <button type="submit" class="btn btn-success" onclick="submitEditor()">💾 保存并发布</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 预览 Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">👁️ 题目预览</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body">
+        <h6 class="text-primary">正常玩家</h6>
+        <div id="preview_normal" class="border rounded p-2 mb-3"></div>
+        {% if config.spy_enabled %}
+        <h6 class="text-danger">间谍玩家</h6>
+        <div id="preview_spy" class="border rounded p-2"></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 引入 Quill -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+<script>
+  const normalEditor = new Quill('#normal_editor', { theme: 'snow' });
+  {% if config.spy_enabled %}
+  const spyEditor = new Quill('#spy_editor', { theme: 'snow' });
+  {% endif %}
+
+  function submitEditor() {
+    document.getElementById("normal_input").value = normalEditor.root.innerHTML;
+    {% if config.spy_enabled %}
+    document.getElementById("spy_input").value = spyEditor.root.innerHTML;
+    {% endif %}
+  }
+
+  function previewQuestions() {
+    document.getElementById("preview_normal").innerHTML = normalEditor.root.innerHTML;
+    {% if config.spy_enabled %}
+    document.getElementById("preview_spy").innerHTML = spyEditor.root.innerHTML;
+    {% endif %}
+    new bootstrap.Modal(document.getElementById("previewModal")).show();
+  }
+</script>
+{% endblock %}

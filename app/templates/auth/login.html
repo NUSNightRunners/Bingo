@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+  <meta charset="UTF-8">
+  <title>登录 - BINGO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- 推荐引入 Google Fonts，可选 -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .login-container {
+      background-color: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-container img.logo {
+      display: block;
+      margin: 0 auto 20px;
+      max-width: 100px;
+    }
+
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      color: #333;
+    }
+
+    .login-container form p {
+      margin-bottom: 16px;
+    }
+
+    .login-container input[type="text"],
+    .login-container input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .captcha-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .captcha-box img {
+      height: 40px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .login-container button {
+      width: 100%;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .login-container button:hover {
+      background-color: #0056b3;
+    }
+
+    .flash-messages {
+      margin-top: 20px;
+      color: red;
+      font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 24px;
+      }
+    }
+
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      padding: 20px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="BINGO Logo" class="logo">
+    <h2>🎲 BINGO 登录</h2>
+
+    <form method="POST">
+      <p>
+        <input type="text" name="username" placeholder="用户名" required>
+      </p>
+      <p>
+        <input type="password" name="password" placeholder="密码" required>
+      </p>
+      <p class="captcha-box">
+        <input type="text" name="captcha" placeholder="验证码" maxlength="4" required>
+        <img src="{{ url_for('auth_bp.captcha') }}" onclick="this.src='{{ url_for('auth_bp.captcha') }}?'+Math.random();" title="点击刷新验证码">
+      </p>
+      <button type="submit">登录</button>
+    </form>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for msg in messages %}
+            <div>{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <footer class="footer">
+      版权所有 © Istellable & 新加坡国立大学夜跑团<br>
+      由新加坡国立大学计算机学院UNIX集群提供服务
+    </footer>
+  </div>
+
+  <script>
+    // 如果用户按浏览器返回按钮，强制刷新当前页（避免显示缓存页）
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function () {
+      window.history.pushState(null, "", window.location.href);
+    };
+  </script>
+
+</body>
+
+
+
+
+
+</html>
