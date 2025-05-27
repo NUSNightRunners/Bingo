@@ -36,7 +36,7 @@
             <!-- 🎥 附件 -->
             <p class="fw-bold">📎 附件</p>
             {% if sub.image_path %}
-              {% if sub.image_path.endswith('.mp4') or sub.image_path.endswith('.webm') %}
+              {% if sub.image_path.endswith('.mp4') or sub.image_path.endswith('.webm') or sub.image_path.endswith('.mov') %}
                 <video width="100%" class="rounded border mb-3" controls>
                   <source src="/{{ sub.image_path }}">
                 </video>
