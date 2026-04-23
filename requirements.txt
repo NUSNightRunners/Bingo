@@ -12,4 +12,3 @@ Flask-WTF==1.2.1
 wtforms[email]==3.1.2
 Flask-Bootstrap==3.3.7.1
 Pillow==10.2.0
-321

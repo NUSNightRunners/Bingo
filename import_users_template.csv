@@ -1,0 +1,5 @@
+username,password,is_admin,is_spy,team_id
+Alice,password123,0,0,1
+Bob,password123,0,0,2
+Charlie,password123,0,1,1
+David,password123,1,0,0

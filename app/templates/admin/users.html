@@ -33,8 +33,8 @@
       <div class="card">
         <div class="card-header bg-light">🔧 设置团队总数</div>
         <div class="card-body">
-          <form method="post" action="{{ url_for('admin_bp.set_team_count') }}">
-            <select name="team_count" class="form-select" onchange="this.form.submit()">
+          <form method="post" action="{{ url_for('admin_bp.set_team_count') }}" id="teamCountForm">
+            <select name="team_count" class="form-select" onchange="confirmTeamCount(this)">
               {% for i in range(1, 11) %}
                 <option value="{{ i }}" {% if i == team_count %}selected{% endif %}>{{ i }} 个团队</option>
               {% endfor %}
@@ -173,4 +173,19 @@
     </div>
   </div>
 </div>
+
+<script>
+  // 记录初始值，用于取消时恢复
+  var teamCountSelect = document.querySelector('#teamCountForm select[name="team_count"]');
+  var originalTeamCount = teamCountSelect.value;
+
+  function confirmTeamCount(selectEl) {
+    var newVal = selectEl.value;
+    if (confirm('⚠️ 确定要将团队总数更改为 ' + newVal + ' 个吗？\n\n此操作将删除所有现有团队及其用户分配关系！')) {
+      selectEl.form.submit();
+    } else {
+      selectEl.value = originalTeamCount;
+    }
+  }
+</script>
 {% endblock %}
